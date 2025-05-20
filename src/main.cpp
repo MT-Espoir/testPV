@@ -159,10 +159,9 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
     preferences.begin("wifi-config", false);
     preferences.clear();
     preferences.end();
-    
-    // Cập nhật biến trong bộ nhớ với thông tin mặc định
     strncpy(WIFI_SSID, DEFAULT_WIFI_SSID, sizeof(WIFI_SSID));
     strncpy(WIFI_PASSWORD, DEFAULT_WIFI_PASSWORD, sizeof(WIFI_PASSWORD));
+    // Cập nhật biến trong bộ nhớ với thông tin mặc định
     String response = "{\"status\":\"success\",\"message\":\"WiFi credentials cleared, default values restored\"}";
     client.publish(MQTT_TOPIC, response.c_str());
     
@@ -176,22 +175,21 @@ void mqttCallback(char* topic, byte* payload, unsigned int length) {
 // Load Wi-Fi từ NVS
 void loadWiFiNVS() {
   preferences.begin("wifi-config", false);
+  
+  // Đọc thông tin từ NVS
+  String savedSSID = preferences.getString("ssid", "");
+  String savedPassword = preferences.getString("password", "");
+  
 
-  Serial.println("\n----- THÔNG TIN LƯU TRONG NVS -----");
-  preferences.getString("ssid", WIFI_SSID, sizeof(WIFI_SSID));
-  preferences.getString("password", WIFI_PASSWORD, sizeof(WIFI_PASSWORD));
-
-  // Hiển thị thông tin WiFi từ NVS
-  Serial.print("SSID trong NVS: ");
-  if (strlen(WIFI_SSID) > 0) {
+  if (savedSSID.length() > 0) {
+    // Nếu có dữ liệu trong NVS, sử dụng nó
+    strncpy(WIFI_SSID, savedSSID.c_str(), sizeof(WIFI_SSID));
+    strncpy(WIFI_PASSWORD, savedPassword.c_str(), sizeof(WIFI_PASSWORD));
+    Serial.println("Đã tải thông tin Wi-Fi từ NVS");
+    Serial.print("SSID: ");
     Serial.println(WIFI_SSID);
-    Serial.print("Password trong NVS: ");
-    Serial.println(WIFI_PASSWORD); 
   } else {
-    Serial.println("<không có>");
-  }
-
-  if (strlen(WIFI_SSID) == 0) {
+    // Nếu không có dữ liệu, sử dụng giá trị mặc định
     Serial.println("Không tìm thấy thông tin Wi-Fi trong NVS");
     strncpy(WIFI_SSID, DEFAULT_WIFI_SSID, sizeof(WIFI_SSID));
     strncpy(WIFI_PASSWORD, DEFAULT_WIFI_PASSWORD, sizeof(WIFI_PASSWORD));
@@ -271,7 +269,8 @@ void InitWiFi() {
 
 void setup() {
   Serial.begin(115200);
-  
+  delay(5000);
+  Serial.println("khởi động hệ thống");
   // Khởi tạo các task FreeRTOS cho LED và nút nhấn
   xTaskCreate(ledTask, "LED Task", 1024, NULL, 1, &ledTaskHandle);
   
